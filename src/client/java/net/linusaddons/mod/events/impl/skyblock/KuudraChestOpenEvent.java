@@ -1,0 +1,16 @@
+package net.linusaddons.mod.events.impl.skyblock;
+
+import net.linusaddons.mod.events.Event;
+import net.linusaddons.mod.model.profit.chest.type.ChestType;
+import net.minecraft.world.inventory.Slot;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+public record KuudraChestOpenEvent(
+        int windowId,
+        @NotNull String title,
+        List<Slot> slots,
+        ChestType chestType
+) implements Event {
+}

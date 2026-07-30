@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "linusaddons",
+  "version": "${version}",
+  "name": "LinusAddons",
+  "description": "LinusAddons Kuudra 26.1.2 Mod.",
+  "authors": [
+    "Linus"
+  ],
+  "contact": {
+    "homepage": "https://github.com/LinusSpielt/LinusAddons",
+    "sources": "https://github.com/LinusSpielt/LinusAddons",
+    "issues": "https://github.com/LinusSpielt/LinusAddons",
+    "discord": "https://discord.gg/fJeDhZbv2a"
+  },
+  "license": "MIT",
+  "icon": "assets/linusaddons/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.linusaddons.mod.LAModClient"
+    ],
+    "modmenu": [
+      "net.linusaddons.mod.integration.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "linusaddons.mixins.json",
+    {
+      "config": "linusaddons.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "resourcefulconfig": "*",
+    "java": ">=25",
+    "minecraft": "${minecraft_version}"
+  }
+}

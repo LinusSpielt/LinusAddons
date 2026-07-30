@@ -1,0 +1,55 @@
+{
+  "_comment": "LinusAddons Conditional Render Boxes. Edit this file, save it, then run /la reload — no restart needed.",
+  "_howToUse": [
+    "Each object in 'boxes' defines one box rendered in world space.",
+    "A box is only drawn when ALL of its 'conditions' pass (AND logic).",
+    "For OR logic, add two boxes at the same position with different conditions.",
+    "Run '/la createWaypoint' while standing in-game to create a new box at your position.",
+    "Run '/la reload' after editing this file to apply changes without restarting."
+  ],
+  "_fieldGuide": {
+    "boxFields": {
+      "label":  "name, shown in logs and command output.",
+      "center": "[x, y, z] — world-space centre of the box.",
+      "sizeX":  "Width  on the X axis. Default: 1.0",
+      "sizeY":  "Height on the Y axis. Default: 1.0",
+      "sizeZ":  "Depth  on the Z axis. Default: 1.0",
+      "color":  "[R, G, B] or [R, G, B, A] — each 0-255. Alpha defaults to 255.",
+      "style":  "OUTLINE | FILLED | BOTH | NONE"
+    },
+    "conditionFields": {
+      "type": "MUST_BE_EMPTY | MAX_SIZE_MEDIUM | MAX_SIZE_MINI | OCCUPIED | MIN_SIZE | EXACT_SIZE",
+      "box":  "Spawn-box ID, e.g. \"1\", \"3\".",
+      "size": "Only for MIN_SIZE / EXACT_SIZE: EMPTY | MINI | MEDIUM | BIG"
+    }
+  },
+  "boxes": [
+    {
+      "_comment": "Example — green outline: safe spot when box 1 is empty AND box 3 has at most a medium tentacle",
+      "label":  "Left safe (1 empty, 3 <= medium)",
+      "center": [-114.5, 68.5, -137.0],
+      "sizeX":  1.0,
+      "sizeY":  1.0,
+      "sizeZ":  1.0,
+      "color":  [85, 255, 85, 136],
+      "style":  "OUTLINE",
+      "conditions": [
+        { "type": "MUST_BE_EMPTY",   "box": "1" },
+        { "type": "MAX_SIZE_MEDIUM", "box": "3" }
+      ]
+    },
+    {
+      "_comment": "Example — red filled+outline warning when box 2 has a big tentacle",
+      "label":  "Box 2 big danger",
+      "center": [-125.0, 68.5, -143.0],
+      "sizeX":  1.0,
+      "sizeY":  2.0,
+      "sizeZ":  1.0,
+      "color":  [255, 68, 68, 136],
+      "style":  "BOTH",
+      "conditions": [
+        { "type": "EXACT_SIZE", "box": "2", "size": "BIG" }
+      ]
+    }
+  ]
+}

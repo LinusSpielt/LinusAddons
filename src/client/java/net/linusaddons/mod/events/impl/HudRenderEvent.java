@@ -1,0 +1,20 @@
+package net.linusaddons.mod.events.impl;
+
+import net.linusaddons.mod.events.Event;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+
+public record HudRenderEvent(
+        GuiGraphicsExtractor drawContext,
+        float tickDelta,
+        int screenWidth,
+        int screenHeight
+) implements Event {
+
+    public int centerX() {
+        return screenWidth / 2;
+    }
+
+    public int centerY() {
+        return screenHeight / 2;
+    }
+}

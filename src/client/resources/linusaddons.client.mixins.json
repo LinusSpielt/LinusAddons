@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.linusaddons.mod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ArmorStandRendererMixin",
+    "AttackMixin",
+    "BossBarHudMixin",
+    "HandledScreenMixin",
+    "HudClickMixin",
+    "InGameHudMixin",
+    "ItemUseMixin",
+    "WorldRendererMixin",
+    "ScreenOpenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "mixins": [
+    "ClientConnectionMixin"  
+  ]
+}

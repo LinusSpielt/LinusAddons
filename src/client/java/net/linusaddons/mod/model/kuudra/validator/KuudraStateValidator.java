@@ -1,0 +1,191 @@
+package net.linusaddons.mod.model.kuudra.validator;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.linusaddons.mod.model.kuudra.KuudraContext;
+import net.linusaddons.mod.model.kuudra.KuudraPhase;
+import net.linusaddons.mod.utils.ScoreboardUtils;
+import net.linusaddons.mod.utils.StringUtils;
+import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static net.linusaddons.mod.LAConstants.KUUDRA_AREA_ID;
+import static net.linusaddons.mod.LAConstants.SKYBLOCK_AREA_ID;
+
+@Slf4j
+@RequiredArgsConstructor
+public final class KuudraStateValidator {
+
+    private static final Minecraft mc = Minecraft.getInstance();
+
+    private static final Pattern SUPPLIES_PATTERN = Pattern.compile("Rescue supplies");
+    private static final Pattern BUILD_PATTERN = Pattern.compile("Protect Elle\\s*\\((\\d+)%\\)");
+
+    public sealed interface ValidationResult permits
+            ValidationResult.Valid,
+            ValidationResult.AreaMismatch,
+            ValidationResult.NotOnSkyBlock,
+            ValidationResult.PlayerNotInWorld,
+            ValidationResult.PhaseMismatch {
+
+        boolean isValid();
+
+        String reason();
+
+        record Valid() implements ValidationResult {
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public String reason() {
+                return "State is valid";
+            }
+        }
+
+        record AreaMismatch(String expectedArea, String actualArea) implements ValidationResult {
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public String reason() { 
+                return "Area mismatch: expected '%s', got '%s'".formatted(expectedArea, actualArea); 
+            }
+        }
+
+        record NotOnSkyBlock() implements ValidationResult {
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public String reason() {
+                return "Player not on SkyBlock";
+            }
+        }
+
+        record PlayerNotInWorld() implements ValidationResult {
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public String reason() {
+                return "Player not in world";
+            }
+        }
+
+        record PhaseMismatch(KuudraPhase expected, KuudraPhase detected) implements ValidationResult {
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Contract(pure = true)
+            @Override
+            public @NotNull String reason() {
+                return "Phase mismatch: expected '%s', detected '%s'".formatted(expected, detected); 
+            }
+        }
+    }
+
+    public @NotNull ValidationResult validate(@NotNull KuudraContext context) {
+        if (mc.player == null || mc.level == null) {
+            return new ValidationResult.PlayerNotInWorld();
+        }
+
+        boolean ignoreScoreboardPresenceChecks = context.phase() == KuudraPhase.DPS
+                || context.phase() == KuudraPhase.SKIP;
+
+        if (!ignoreScoreboardPresenceChecks && !isOnSkyBlock()) {
+            return new ValidationResult.NotOnSkyBlock();
+        }
+
+        if (context.isInRun()) {
+            String currentArea = getCurrentArea();
+            // An empty/blank area string means the scoreboard area line is momentarily absent
+            // (e.g. during a phase transition that changes the scoreboard format like DPS->SKIP).
+            // Only report a mismatch when we have an actual non-blank area to compare against.
+            if (!ignoreScoreboardPresenceChecks && !currentArea.isBlank() && !isInKuudraArea(currentArea)) {
+                return new ValidationResult.AreaMismatch(KUUDRA_AREA_ID, currentArea);
+            }
+
+            Optional<KuudraPhase> detectedPhase = detectPhaseFromScoreboard();
+            if (detectedPhase.isPresent() && !isPhasePlausible(context.phase(), detectedPhase.get())) {
+                return new ValidationResult.PhaseMismatch(context.phase(), detectedPhase.get());
+            }
+        }
+
+        return new ValidationResult.Valid();
+    }
+
+    public @NotNull AreaInfo detectAreaInfo() {
+        boolean onSkyBlock = isOnSkyBlock();
+        String area = getCurrentArea();
+        boolean inKuudra = isInKuudraArea(area);
+
+        return new AreaInfo(onSkyBlock, inKuudra, area);
+    }
+
+    private boolean isOnSkyBlock() {
+        return ScoreboardUtils.hasTitle(SKYBLOCK_AREA_ID);
+    }
+
+    private @NotNull String getCurrentArea() {
+        return ScoreboardUtils.getArea();
+    }
+
+    private boolean isInKuudraArea(@NotNull String area) {
+        return area.toLowerCase().contains(KUUDRA_AREA_ID.toLowerCase());
+    }
+
+    private @NotNull Optional<KuudraPhase> detectPhaseFromScoreboard() {
+        for (String line : ScoreboardUtils.getLines()) {
+            String stripped = StringUtils.stripFormatting(line);
+            if (SUPPLIES_PATTERN.matcher(stripped).find()) {
+                return Optional.of(KuudraPhase.SUPPLIES);
+            }
+
+            Matcher buildMatcher = BUILD_PATTERN.matcher(stripped);
+            if (buildMatcher.find()) {
+                return Optional.of(KuudraPhase.BUILD);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private boolean isPhasePlausible(@NotNull KuudraPhase expected, @NotNull KuudraPhase detected) {
+        if (expected == detected) return true;
+        if (expected.previous() == detected) return true;
+        if (expected.next() == detected) return true;
+        if (expected == KuudraPhase.EATEN && detected == KuudraPhase.SUPPLIES) return true;
+
+        return expected.isCombatPhase() && detected.isCombatPhase();
+    }
+
+    public record AreaInfo(
+            boolean onSkyBlock,
+            boolean inKuudra,
+            @NotNull String areaName
+    ) {
+        public boolean canBeInRun() {
+            return onSkyBlock && inKuudra;
+        }
+    }
+}

@@ -1,0 +1,75 @@
+package net.linusaddons.mod.model.kuudra;
+
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
+import java.time.Duration;
+import java.time.Instant;
+
+public record KuudraContext(
+        @NotNull KuudraTier tier,
+        @NotNull KuudraPhase phase,
+        @NotNull Instant phaseStartTime,
+        @NotNull Instant lastValidation,
+        boolean inKuudraArea, boolean onSkyBlock,
+        @NotNull KuudraBossInfo bossInfo
+) {
+
+    public static @NotNull KuudraContext empty() {
+        return new KuudraContext(
+                KuudraTier.UNKNOWN, KuudraPhase.NONE, Instant.EPOCH, Instant.now(),
+                false, false,
+                KuudraBossInfo.empty()
+        );
+    }
+
+    public static @NotNull KuudraContext entering(KuudraTier tier) {
+        return new KuudraContext(
+                tier, KuudraPhase.SUPPLIES, Instant.now(), Instant.now(),
+                true, true,
+                KuudraBossInfo.empty()
+        );
+    }
+
+    public @NotNull KuudraContext withPhase(@NotNull KuudraPhase newPhase) {
+        return new KuudraContext(
+                tier, newPhase, Instant.now(), Instant.now(),
+                inKuudraArea, onSkyBlock, bossInfo
+        );
+    }
+
+    public @NotNull KuudraContext validated() {
+        return new KuudraContext(
+                tier, phase, phaseStartTime, Instant.now(),
+                inKuudraArea, onSkyBlock, bossInfo
+        );
+    }
+
+    @Contract("_ -> new")
+    public @NotNull KuudraContext withBossInfo(@NotNull KuudraBossInfo newBossInfo) {
+        return new KuudraContext(
+                tier, phase, phaseStartTime, lastValidation,
+                inKuudraArea, onSkyBlock,
+                newBossInfo
+        );
+    }
+
+    public @NotNull KuudraContext withTier(@NotNull KuudraTier newTier) {
+        return new KuudraContext(
+                newTier, phase, phaseStartTime, lastValidation,
+                inKuudraArea, onSkyBlock, bossInfo
+        );
+    }
+
+    public boolean isInRun() {
+        return phase.isInRun() && inKuudraArea && onSkyBlock;
+    }
+
+    public @NotNull Duration phaseDuration() {
+        if (phaseStartTime == Instant.EPOCH) {
+            return Duration.ZERO;
+        }
+
+        return Duration.between(phaseStartTime, Instant.now());
+    }
+}
