@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="src/main/resources/assets/iq/icon.png" alt="IQ Logo" width="100"><br>
+  <img src="src/main/resources/assets/linusaddons/icon.png" alt="IQ Logo" width="100"><br>
   LinusAddons
 </h1>
 
